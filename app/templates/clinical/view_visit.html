@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}تفاصيل الكشف - {{ visit.appointment.patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="bi bi-file-medical"></i> تفاصيل الكشف الطبي</h2>
+    </div>
+    <div class="col-md-4 text-start">
+        <a href="{{ url_for('clinical.doctor_dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-right"></i> رجوع
+        </a>
+        {% if current_user.can('clinical.edit') and visit.doctor_id == current_user.id %}
+        <a href="{{ url_for('clinical.consultation', appointment_id=visit.appointment_id) }}" 
+           class="btn btn-warning">
+            <i class="bi bi-pencil"></i> تعديل
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <!-- Patient & Visit Info -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-circle"></i> معلومات المريض</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>الاسم:</strong><br>
+                    <a href="{{ url_for('patients.view_patient', patient_id=visit.appointment.patient.id) }}">
+                        {{ visit.appointment.patient.full_name }}
+                    </a>
+                </p>
+                <p><strong>رقم الملف:</strong><br>{{ visit.appointment.patient.file_number }}</p>
+                <p><strong>الجنس:</strong><br>
+                    {% if visit.appointment.patient.gender == 'M' %}ذكر
+                    {% elif visit.appointment.patient.gender == 'F' %}أنثى
+                    {% else %}غير محدد{% endif %}
+                </p>
+                {% if visit.appointment.patient.dob %}
+                <p><strong>العمر:</strong><br>{{ (date.today().year - visit.appointment.patient.dob.year) }} سنة</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> معلومات الكشف</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>الطبيب:</strong><br>{{ visit.doctor.full_name_ar }}</p>
+                <p><strong>التاريخ:</strong><br>{{ visit.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p><strong>تاريخ الموعد:</strong><br>{{ visit.appointment.date_time.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Visit Details -->
+    <div class="col-md-8">
+        <!-- Symptoms -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-thermometer"></i> الأعراض</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0" style="white-space: pre-wrap;">{{ visit.symptoms }}</p>
+            </div>
+        </div>
+        
+        <!-- Diagnosis -->
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> التشخيص</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0" style="white-space: pre-wrap;">{{ visit.diagnosis }}</p>
+            </div>
+        </div>
+        
+        <!-- Prescription -->
+        {% if visit.prescription_text %}
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-capsule"></i> الوصفة الطبية</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0" style="white-space: pre-wrap;">{{ visit.prescription_text }}</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Vitals -->
+        {% if visit.vitals %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-heart-pulse"></i> العلامات الحيوية</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if visit.vitals.temperature %}
+                    <div class="col-md-4 mb-2">
+                        <strong>درجة الحرارة:</strong><br>
+                        {{ visit.vitals.temperature }} °C
+                    </div>
+                    {% endif %}
+                    
+                    {% if visit.vitals.blood_pressure %}
+                    <div class="col-md-4 mb-2">
+                        <strong>ضغط الدم:</strong><br>
+                        {{ visit.vitals.blood_pressure }} mmHg
+                    </div>
+                    {% endif %}
+                    
+                    {% if visit.vitals.heart_rate %}
+                    <div class="col-md-4 mb-2">
+                        <strong>نبضات القلب:</strong><br>
+                        {{ visit.vitals.heart_rate }} bpm
+                    </div>
+                    {% endif %}
+                    
+                    {% if visit.vitals.weight %}
+                    <div class="col-md-4 mb-2">
+                        <strong>الوزن:</strong><br>
+                        {{ visit.vitals.weight }} kg
+                    </div>
+                    {% endif %}
+                    
+                    {% if visit.vitals.height %}
+                    <div class="col-md-4 mb-2">
+                        <strong>الطول:</strong><br>
+                        {{ visit.vitals.height }} cm
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if visit.vitals.notes %}
+                <hr>
+                <p class="mb-0"><strong>ملاحظات:</strong><br>{{ visit.vitals.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('clinical.patient_history', patient_id=visit.appointment.patient.id) }}" 
+               class="btn btn-outline-primary">
+                <i class="bi bi-clock-history"></i> السجل الطبي الكامل
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-secondary">
+                <i class="bi bi-printer"></i> طباعة
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        .btn, .navbar, .card-header { display: none !important; }
+        .card { border: none; box-shadow: none; }
+    }
+</style>
+{% endblock %}

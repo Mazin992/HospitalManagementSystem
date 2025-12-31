@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}تغيير حالة السرير - نظام إدارة المستشفى{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-gear"></i> تغيير حالة السرير</h2>
+        <p class="text-muted">غرفة {{ bed.room_number }} - سرير {{ bed.bed_label }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.status.label(class="form-label") }}
+                        {{ form.status(class="form-select form-select-lg") }}
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <ul class="mb-0">
+                            <li><strong>متاح:</strong> السرير جاهز لاستقبال مريض جديد</li>
+                            <li><strong>تحت الصيانة:</strong> السرير يحتاج إلى تنظيف أو إصلاح</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('facility.bed_detail', bed_id=bed.id) }}" class="btn btn-secondary">
+                            إلغاء
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

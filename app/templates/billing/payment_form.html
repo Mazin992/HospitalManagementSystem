@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل دفعة - فاتورة #{{ invoice.id }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-cash-coin"></i> تسجيل دفعة - فاتورة #{{ invoice.id }}</h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Invoice Summary -->
+<div class="col-md-4 mb-4">
+<div class="card">
+<div class="card-header bg-primary text-white">
+<h5 class="mb-0">ملخص الفاتورة</h5>
+</div>
+<div class="card-body">
+<p><strong>المريض:</strong><br>{{ invoice.patient.full_name }}</p>
+<p><strong>رقم الفاتورة:</strong><br>#{{ invoice.id }}</p>
+<p><strong>التاريخ:</strong><br>{{ invoice.created_at.strftime('%Y-%m-%d') }}</p>
+<hr>
+<p><strong>المبلغ المستحق:</strong></p>
+<h3 class="text-danger mb-0">{{ "%.2f"|format(invoice.total_amount) }} ج.س</h3>
+</div>
+</div>
+</div>
+<!-- Payment Form -->
+<div class="col-md-8">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">بيانات الدفعة</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    {{ form.payment_method.label(class="form-label") }}
+                    {{ form.payment_method(class="form-select form-select-lg") }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.amount_paid.label(class="form-label") }}
+                    <div class="input-group input-group-lg">
+                        {{ form.amount_paid(class="form-control" + (" is-invalid" if form.amount_paid.errors else "")) }}
+                        <span class="input-group-text">ج.س</span>
+                    </div>
+                    {% if form.amount_paid.errors %}
+                        <div class="invalid-feedback d-block">{{ form.amount_paid.errors[0] }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.reference_number.label(class="form-label") }}
+                    {{ form.reference_number(class="form-control") }}
+                    <div class="form-text">مثال: رقم الشيك، رقم العملية البنكية...</div>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.notes.label(class="form-label") }}
+                    {{ form.notes(class="form-control") }}
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>ملاحظة:</strong> سيتم تحديث حالة الفاتورة تلقائياً بعد تسجيل الدفعة.
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('billing.invoice_detail', invoice_id=invoice.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-right"></i> إلغاء
+                    </a>
+                    {{ form.submit(class="btn btn-success btn-lg") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
