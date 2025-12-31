@@ -32,8 +32,8 @@ A comprehensive web-based application built with Flask to manage hospital operat
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/hospital-management-system.git
-   cd hospital-management-system
+   git clone https://github.com/Mazin992/HospitalManagementSystem.git
+   cd HospitalManagementSystem
    ```
 
 2. **Install dependencies**
@@ -71,4 +71,5 @@ This project is for educational and demonstration purposes. Modify and distribut
 ---
 
 > Developed by **Mazin Elfaki**  
+
 > © 2026 Hospital Management System
