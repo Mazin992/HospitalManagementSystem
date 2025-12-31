@@ -1,6 +1,11 @@
 # Hospital Management System
 
 A comprehensive web-based application built with Flask to manage hospital operations including patients, appointments, clinical records, bed admissions, billing, and user roles.
+## Demo
+
+[![Project Demo](https://img.youtube.com/vi/bNso-urXYiw/hqdefault.jpg)](https://www.youtube.com/watch?v=bNso-urXYiw)
+
+Click the image above to watch the video on YouTube.
 
 ## ✨ Features
 
@@ -73,3 +78,4 @@ This project is for educational and demonstration purposes. Modify and distribut
 > Developed by **Mazin Elfaki**  
 
 > © 2026 Hospital Management System
+
