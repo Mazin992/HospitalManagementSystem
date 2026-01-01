@@ -73,9 +73,14 @@ After initialization, a default admin user is created:
 
 This project is for educational and demonstration purposes. Modify and distribute as needed.
 
+## For Contact
+
+- **Email**: : mazin360@gmail.com
+
 ---
 
 > Developed by **Mazin Elfaki**  
 
 > © 2026 Hospital Management System
+
 
