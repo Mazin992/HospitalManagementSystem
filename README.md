@@ -55,8 +55,6 @@ CREATE USER hospital_user WITH
     CREATEROLE 
     LOGIN;
 
-3
-
 3. **Run the application**
    run.bat
 
@@ -85,5 +83,6 @@ If you have any questions, suggestions, or need help with the System, feel free 
 > Developed by **Mazin Elfaki**  
 
 > © 2026 Hospital Management System
+
 
 
