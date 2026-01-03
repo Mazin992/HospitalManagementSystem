@@ -41,27 +41,27 @@ Click the image above to watch the video on YouTube.
    cd HospitalManagementSystem
    ```
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. on Command Line ==>
+# Login as postgres superuser
+psql -U postgres
 
-3. **Set up environment (optional)**
-   ```bash
-   export FLASK_CONFIG=development
-   ```
+# Or on Windows:
+psql -U postgres -h localhost
 
-4. **Initialize the database**  
-   Run the included initialization script:
-   ```bash
-   python preInstall/init_db.py
-   ```
+CREATE USER hospital_user WITH 
+    PASSWORD '123'
+    SUPERUSER 
+    CREATEDB 
+    CREATEROLE 
+    LOGIN;
 
-5. **Run the application**
-   ```bash
-   python run.py
-   ```
+3
+
+3. **Run the application**
+   run.bat
+
    Visit `http://localhost:5000` in your browser.
+
 
 ## 🔐 Default Admin Account
 
@@ -85,6 +85,5 @@ If you have any questions, suggestions, or need help with the System, feel free 
 > Developed by **Mazin Elfaki**  
 
 > © 2026 Hospital Management System
-
 
 

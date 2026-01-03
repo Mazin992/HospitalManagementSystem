@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاتورة #{{ invoice.id }} - {{ invoice.patient.full_name }}</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #333;
+        background: white;
+        padding: 20mm;
+    }
+    
+    .receipt-container {
+        max-width: 800px;
+        margin: 0 auto;
+        border: 2px solid #000;
+        padding: 30px;
+    }
+    
+    .header {
+        text-align: center;
+        border-bottom: 3px double #000;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .header h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+        color: #1a5490;
+    }
+    
+    .header p {
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .invoice-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+    
+    .invoice-info div {
+        flex: 1;
+    }
+    
+    .invoice-info h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: #1a5490;
+    }
+    
+    .invoice-info p {
+        margin: 5px 0;
+    }
+    
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 30px 0;
+    }
+    
+    .items-table th {
+        background: #1a5490;
+        color: white;
+        padding: 12px;
+        text-align: right;
+        font-weight: bold;
+    }
+    
+    .items-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .items-table tbody tr:nth-child(even) {
+        background: #f9f9f9;
+    }
+    
+    .items-table tfoot td {
+        font-weight: bold;
+        font-size: 18px;
+        padding: 15px 12px;
+        background: #f0f0f0;
+        border-top: 2px solid #000;
+    }
+    
+    .total-section {
+        text-align: left;
+        margin-top: 30px;
+        padding: 20px;
+        background: #f0f0f0;
+        border: 2px solid #1a5490;
+    }
+    
+    .total-section h2 {
+        font-size: 24px;
+        color: #1a5490;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 16px;
+    }
+    
+    .status-paid {
+        background: #28a745;
+        color: white;
+    }
+    
+    .status-unpaid {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .status-insurance {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .footer {
+        margin-top: 50px;
+        text-align: center;
+        padding-top: 20px;
+        border-top: 2px solid #000;
+        font-size: 12px;
+        color: #666;
+    }
+    
+    .footer p {
+        margin: 5px 0;
+    }
+    
+    .stamp-section {
+        margin-top: 50px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .stamp-box {
+        width: 45%;
+        text-align: center;
+        padding: 20px;
+        border: 1px dashed #999;
+    }
+    
+    @media print {
+        body {
+            padding: 0;
+        }
+        
+        .receipt-container {
+            border: none;
+            max-width: 100%;
+        }
+        
+        @page {
+            margin: 20mm;
+        }
+    }
+</style>
+</head>
+<body>
+    <div class="receipt-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>{{ hospital_info.name_ar }}</h1>
+            <p>{{ hospital_info.address_ar }}</p>
+            <p>هاتف: {{ hospital_info.phone }}</p>
+
+        </div>
+    <!-- Invoice Info -->
+    <div class="invoice-info">
+        <div>
+            <h3>معلومات الفاتورة</h3>
+            <p><strong>رقم الفاتورة:</strong> #{{ invoice.id }}</p>
+            <p><strong>التاريخ:</strong> {{ invoice.created_at.strftime('%Y-%m-%d') }}</p>
+            <p><strong>الوقت:</strong> {{ invoice.created_at.strftime('%H:%M') }}</p>
+            {% if invoice.paid_at %}
+            <p><strong>تاريخ الدفع:</strong> {{ invoice.paid_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            {% endif %}
+        </div>
+        
+        <div style="text-align: left;">
+            <h3>معلومات المريض</h3>
+            <p><strong>الاسم:</strong> {{ invoice.patient.full_name }}</p>
+            <p><strong>رقم الملف:</strong> {{ invoice.patient.file_number }}</p>
+            {% if invoice.patient.phone %}
+            <p><strong>الهاتف:</strong> {{ invoice.patient.phone }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Status Badge -->
+    <div style="text-align: center; margin: 20px 0;">
+        {% if invoice.status.value == 'paid' %}
+        <span class="status-badge status-paid">✓ مدفوعة</span>
+        {% elif invoice.status.value == 'unpaid' %}
+        <span class="status-badge status-unpaid">غير مدفوعة</span>
+        {% else %}
+        <span class="status-badge status-insurance">تأمين معلق</span>
+        {% endif %}
+    </div>
+    
+    <!-- Items Table -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 10%;">#</th>
+                <th style="width: 50%;">الخدمة</th>
+                <th style="width: 15%;">السعر</th>
+                <th style="width: 10%;">الكمية</th>
+                <th style="width: 15%;">المجموع</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ item.service_name }}</td>
+                <td>{{ "%.2f"|format(item.cost) }} {{ currency.symbol_ar }}</td>
+                <td>{{ item.quantity }}</td>
+                <td><strong>{{ "%.2f"|format(item.cost * item.quantity) }} {{ currency.symbol_ar }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" style="text-align: left;">المجموع الكلي:</td>
+                <td><strong>{{ "%.2f"|format(invoice.total_amount) }} {{ currency.symbol_ar }}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <!-- Total Section -->
+    <div class="total-section">
+        <h2>المبلغ الإجمالي: {{ "%.2f"|format(invoice.total_amount) }} {{ currency.name_ar }}</h2>
+        <p style="margin-top: 10px; font-size: 16px;">
+            <strong>بالأحرف:</strong> 
+            {% set amount_int = invoice.total_amount|int %}
+            {% if amount_int < 10 %}
+            {{ ['صفر', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'][amount_int] }}
+            {% else %}
+            {{ amount_int }}
+            {% endif %}
+            جنيه سوداني فقط لا غير
+        </p>
+    </div>
+    
+    <!-- Stamp Section -->
+    <div class="stamp-section">
+        <div class="stamp-box">
+            <p><strong>توقيع المريض</strong></p>
+            <p style="margin-top: 40px;">_____________________</p>
+        </div>
+        
+        <div class="stamp-box">
+            <p><strong>توقيع المسؤول</strong></p>
+            <p style="margin-top: 40px;">_____________________</p>
+            <p style="font-size: 10px; margin-top: 10px;">الختم</p>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>شكراً لثقتكم بنا</strong></p>
+        <p>{{ hospital_info.name_ar }} - {{ hospital_info.address_ar }}</p>
+        <p>في حالة وجود أي استفسار يرجى الاتصال على: {{ hospital_info.phone }}</p>
+        <p style="margin-top: 10px; font-size: 10px;">تم إنشاء هذه الفاتورة آلياً بواسطة نظام إدارة المستشفى</p>
+    </div>
+</div>
+
+<script>
+    // Auto-print when page loads
+    window.onload = function() {
+        // Give a moment for the page to fully render
+        setTimeout(function() {
+            window.print();
+        }, 500);
+    };
+</script>
+</body>
+</html>

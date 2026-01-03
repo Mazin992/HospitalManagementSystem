@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}تفاصيل السرير - غرفة {{ bed.room_number }} - سرير {{ bed.bed_label }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="bi bi-bed"></i> غرفة {{ bed.room_number }} - سرير {{ bed.bed_label }}</h2>
+    </div>
+    <div class="col-md-4 text-start">
+        <a href="{{ url_for('facility.beds_list') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-right"></i> رجوع
+        </a>
+        {% if current_user.can('facility.manage_beds') and bed.status.value != 'occupied' %}
+        <a href="{{ url_for('facility.change_bed_status', bed_id=bed.id) }}" class="btn btn-warning">
+            <i class="bi bi-gear"></i> تغيير الحالة
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <!-- Bed Status Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-2
+            {% if bed.status.value == 'available' %}border-success
+            {% elif bed.status.value == 'occupied' %}border-danger
+            {% else %}border-warning{% endif %}">
+            <div class="card-header
+                {% if bed.status.value == 'available' %}bg-success
+                {% elif bed.status.value == 'occupied' %}bg-danger
+                {% else %}bg-warning{% endif %} text-white">
+                <h5 class="mb-0">حالة السرير</h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="bi
+                    {% if bed.status.value == 'available' %}bi-check-circle text-success
+                    {% elif bed.status.value == 'occupied' %}bi-person-fill text-danger
+                    {% else %}bi-tools text-warning{% endif %}"
+                   style="font-size: 4rem;"></i>
+                <h3 class="mt-3">
+                    {% if bed.status.value == 'available' %}متاح
+                    {% elif bed.status.value == 'occupied' %}مشغول
+                    {% else %}تحت الصيانة{% endif %}
+                </h3>
+            </div>
+        </div>
+        
+        <!-- Current Admission -->
+        {% if current_admission %}
+        <div class="card mt-3">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">المريض الحالي</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>الاسم:</strong><br>
+                    <a href="{{ url_for('patients.view_patient', patient_id=current_admission.patient.id) }}">
+                        {{ current_admission.patient.full_name }}
+                    </a>
+                </p>
+                <p><strong>رقم الملف:</strong><br>{{ current_admission.patient.file_number }}</p>
+                <p><strong>تاريخ الإدخال:</strong><br>{{ current_admission.admission_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p><strong>المدة:</strong><br>{{ (now() - current_admission.admission_date).days }} يوم</p>
+                
+                {% if current_user.can('facility.discharge') %}
+                <a href="{{ url_for('facility.discharge_patient', admission_id=current_admission.id) }}" 
+                   class="btn btn-warning w-100">
+                    <i class="bi bi-box-arrow-right"></i> تسجيل الخروج
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Admission History -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> سجل الإدخالات</h5>
+            </div>
+            <div class="card-body">
+                {% if admissions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>المريض</th>
+                                <th>تاريخ الدخول</th>
+                                <th>تاريخ الخروج</th>
+                                <th>المدة</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for admission in admissions %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('patients.view_patient', patient_id=admission.patient.id) }}">
+                                        {{ admission.patient.full_name }}
+                                    </a>
+                                </td>
+                                <td>{{ admission.admission_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if admission.discharge_date %}
+                                    {{ admission.discharge_date.strftime('%Y-%m-%d') }}
+                                    {% else %}
+                                    <span class="text-muted">نشط</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if admission.discharge_date %}
+                                    {{ (admission.discharge_date - admission.admission_date).days }} يوم
+                                    {% else %}
+                                    {{ (now() - admission.admission_date).days }} يوم
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if admission.status.value == 'active' %}
+                                    <span class="badge bg-success">نشط</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">خرج</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">لا يوجد سجل إدخالات لهذا السرير</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

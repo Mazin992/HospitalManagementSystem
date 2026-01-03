@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة تحكم الطبيب - نظام إدارة المستشفى{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="bi bi-clipboard2-pulse"></i> لوحة تحكم الطبيب</h2>
+        <p class="text-muted">د. {{ current_user.full_name_ar }}</p>
+    </div>
+    <div class="col-md-4 text-start">
+        <div class="btn-group">
+            <a href="{{ url_for('appointments.list_appointments', doctor_id=current_user.id) }}" 
+               class="btn btn-outline-primary">
+                <i class="bi bi-calendar-week"></i> جميع مواعيدي
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">مواعيد اليوم</h6>
+                <h2 class="mb-0">{{ total_today }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">تم إنهاؤها</h6>
+                <h2 class="mb-0">{{ completed_today }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6 class="card-title">قيد الانتظار</h6>
+                <h2 class="mb-0">{{ total_today - completed_today }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6 class="card-title">مواعيد معلقة</h6>
+                <h2 class="mb-0">{{ pending_appointments }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Today's Appointments -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-day"></i> مواعيد اليوم</h5>
+            </div>
+            <div class="card-body">
+                {% if todays_appointments %}
+                <div class="list-group">
+                    {% for appt in todays_appointments %}
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <strong class="text-primary">{{ appt.date_time.strftime('%H:%M') }}</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>{{ appt.patient.full_name }}</strong><br>
+                                <small class="text-muted">
+                                    {{ appt.patient.file_number }} | 
+                                    {% if appt.patient.gender == 'M' %}ذكر{% elif appt.patient.gender == 'F' %}أنثى{% endif %}
+                                    {% if appt.patient.dob %}
+                                    | {{ (date.today().year - appt.patient.dob.year) }} سنة
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="col-md-2">
+                                {% if appt.type == 'walk-in' %}
+                                    <span class="badge bg-warning">طارئ</span>
+                                {% else %}
+                                    <span class="badge bg-info">محجوز</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2">
+                                {% if appt.status.value == 'completed' %}
+                                    <span class="badge bg-success">منتهي</span>
+                                {% elif appt.status.value == 'confirmed' %}
+                                    <span class="badge bg-primary">مؤكد</span>
+                                {% elif appt.status.value == 'no_show' %}
+                                    <span class="badge bg-secondary">لم يحضر</span>
+                                {% else %}
+                                    <span class="badge bg-warning">معلق</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 text-start">
+                                {% if appt.status.value == 'completed' %}
+                                    {% if appt.medical_visit %}
+                                    <a href="{{ url_for('clinical.view_visit', visit_id=appt.medical_visit.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> عرض
+                                    </a>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="btn-group btn-group-sm">
+                                        <form method="POST" action="{{ url_for('clinical.start_appointment', appointment_id=appt.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-success" title="بدء الكشف">
+                                                <i class="bi bi-play-circle"></i>
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('clinical.mark_no_show', appointment_id=appt.id) }}" 
+                                              class="d-inline" onsubmit="return confirm('هل أنت متأكد؟')">
+                                            <button type="submit" class="btn btn-outline-secondary" title="لم يحضر">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if appt.notes %}
+                        <div class="mt-2">
+                            <small class="text-muted"><i class="bi bi-chat-left-text"></i> {{ appt.notes }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> لا توجد مواعيد لهذا اليوم
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Upcoming Appointments -->
+        {% if upcoming_appointments %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-calendar-range"></i> المواعيد القادمة</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الوقت</th>
+                                <th>المريض</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appt in upcoming_appointments %}
+                            <tr>
+                                <td>{{ appt.date_time.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ appt.date_time.strftime('%H:%M') }}</td>
+                                <td>{{ appt.patient.full_name }}</td>
+                                <td>
+                                    {% if appt.status.value == 'confirmed' %}
+                                        <span class="badge bg-primary">مؤكد</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">معلق</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Visits -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-journal-medical"></i> آخر الكشوفات</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_visits %}
+                <div class="list-group list-group-flush">
+                    {% for visit in recent_visits %}
+                    <a href="{{ url_for('clinical.view_visit', visit_id=visit.id) }}" 
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ visit.appointment.patient.full_name }}</strong><br>
+                                <small class="text-muted">
+                                    {{ visit.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </div>
+                            <i class="bi bi-chevron-left"></i>
+                        </div>
+                        <div class="mt-1">
+                            <small class="text-muted">{{ visit.diagnosis[:50] }}...</small>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">لا توجد كشوفات حديثة</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh every 5 minutes
+    setTimeout(function() {
+        location.reload();
+    }, 300000);
+</script>
+{% endblock %}

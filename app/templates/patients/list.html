@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}قائمة المرضى - نظام إدارة المستشفى{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2><i class="bi bi-people-fill"></i> قائمة المرضى</h2>
+    </div>
+    <div class="col-md-6 text-start">
+        <a href="{{ url_for('patients.create_patient') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> تسجيل مريض جديد
+        </a>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('patients.list_patients') }}" class="row g-3">
+            <div class="col-md-10">
+                {{ search_form.search_query(class="form-control", value=search_query) }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="bi bi-search"></i> بحث
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Patients Table -->
+<div class="card">
+    <div class="card-body">
+        {% if patients.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>رقم الملف</th>
+                        <th>اسم المريض</th>
+                        <th>رقم الهاتف</th>
+                        <th>الجنس</th>
+                        <th>تاريخ التسجيل</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients.items %}
+                    <tr>
+                        <td><strong>{{ patient.file_number }}</strong></td>
+                        <td>{{ patient.full_name }}</td>
+                        <td>{{ patient.phone }}</td>
+                        <td>
+                            {% if patient.gender == 'M' %}
+                                <span class="badge bg-primary">ذكر</span>
+                            {% elif patient.gender == 'F' %}
+                                <span class="badge bg-info">أنثى</span>
+                            {% else %}
+                                <span class="badge bg-secondary">غير محدد</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ patient.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('patients.view_patient', patient_id=patient.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="عرض">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('patients.edit_patient', patient_id=patient.id) }}" 
+                                   class="btn btn-sm btn-outline-warning" title="تعديل">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('appointments.book_appointment', patient_id=patient.id) }}" 
+                                   class="btn btn-sm btn-outline-success" title="حجز موعد">
+                                    <i class="bi bi-calendar-plus"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if patients.pages > 1 %}
+        <nav aria-label="تصفح الصفحات">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not patients.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('patients.list_patients', page=patients.prev_num, search_query=search_query) }}">
+                        السابق
+                    </a>
+                </li>
+                
+                {% for page_num in patients.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=3) %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == patients.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('patients.list_patients', page=page_num, search_query=search_query) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {% if not patients.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('patients.list_patients', page=patients.next_num, search_query=search_query) }}">
+                        التالي
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i>
+            {% if search_query %}
+                لا توجد نتائج للبحث عن "{{ search_query }}"
+            {% else %}
+                لا يوجد مرضى مسجلون حالياً
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

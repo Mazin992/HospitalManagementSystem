@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}الفواتير - نظام إدارة المستشفى{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2><i class="bi bi-receipt"></i> الفواتير</h2>
+    </div>
+    <div class="col-md-6 text-start">
+        <a href="{{ url_for('billing.services_list') }}" class="btn btn-secondary">
+            <i class="bi bi-list-check"></i> الخدمات
+        </a>
+        <a href="{{ url_for('billing.create_invoice') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> فاتورة جديدة
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-danger">
+            <div class="card-body">
+                <h6 class="text-muted">غير مدفوعة</h6>
+                <h2 class="text-danger mb-0">{{ total_unpaid }}</h2>
+                <small class="text-muted">{{ "%.2f"|format(pending_amount) }} {{ currency.symbol_ar }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body">
+                <h6 class="text-muted">مدفوعة</h6>
+                <h2 class="text-success mb-0">{{ total_paid }}</h2>
+                <small class="text-muted">{{ "%.2f"|format(total_revenue) }} {{ currency.symbol_ar }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h6 class="text-muted">تأمين معلق</h6>
+                <h2 class="text-warning mb-0">{{ total_insurance }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body">
+                <h6 class="text-muted">إجمالي الإيرادات</h6>
+                <h2 class="text-primary mb-0">{{ "%.2f"|format(total_revenue) }}</h2>
+                <small class="text-muted">{{ currency.symbol_ar }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">الحالة</label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>جميع الفواتير</option>
+                    <option value="unpaid" {% if status_filter == 'unpaid' %}selected{% endif %}>غير مدفوعة</option>
+                    <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>مدفوعة</option>
+                    <option value="insurance_pending" {% if status_filter == 'insurance_pending' %}selected{% endif %}>تأمين معلق</option>
+                </select>
+            </div>
+            
+            <div class="col-md-6">
+                <label class="form-label">بحث</label>
+                <input type="text" name="search" class="form-control" 
+                       placeholder="ابحث بالمريض أو رقم الملف أو رقم الفاتورة..." 
+                       value="{{ search_query }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> بحث
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="card">
+    <div class="card-body">
+        {% if invoices.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>رقم الفاتورة</th>
+                        <th>المريض</th>
+                        <th>المبلغ ({{ currency.symbol_ar }})</th>
+                        <th>التاريخ</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices.items %}
+                    <tr>
+                        <td><strong>#{{ invoice.id }}</strong></td>
+                        <td>
+                            <a href="{{ url_for('patients.view_patient', patient_id=invoice.patient.id) }}">
+                                {{ invoice.patient.full_name }}
+                            </a><br>
+                            <small class="text-muted">{{ invoice.patient.file_number }}</small>
+                        </td>
+                        <td><strong>{{ "%.2f"|format(invoice.total_amount) }}</strong></td>
+                        <td>{{ invoice.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if invoice.status.value == 'paid' %}
+                            <span class="badge bg-success">مدفوعة</span>
+                            {% elif invoice.status.value == 'unpaid' %}
+                            <span class="badge bg-danger">غير مدفوعة</span>
+                            {% else %}
+                            <span class="badge bg-warning">تأمين معلق</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('billing.invoice_detail', invoice_id=invoice.id) }}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if invoice.status.value != 'paid' %}
+                                <a href="{{ url_for('billing.pay_invoice', invoice_id=invoice.id) }}" 
+                                   class="btn btn-outline-success">
+                                    <i class="bi bi-cash"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('billing.print_receipt', invoice_id=invoice.id) }}" 
+                                   class="btn btn-outline-secondary" target="_blank">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if invoices.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not invoices.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('billing.invoices_list', page=invoices.prev_num, status=status_filter, search=search_query) }}">
+                        السابق
+                    </a>
+                </li>
+                
+                {% for page_num in invoices.iter_pages() %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == invoices.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('billing.invoices_list', page=page_num, status=status_filter, search=search_query) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {% if not invoices.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('billing.invoices_list', page=invoices.next_num, status=status_filter, search=search_query) }}">
+                        التالي
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> لا توجد فواتير مطابقة
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

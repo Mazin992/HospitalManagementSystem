@@ -1,0 +1,178 @@
+<!-- app/templates/admin/dashboard.html -->
+
+{% extends "base.html" %}
+
+{% block title %}لوحة إدارة النظام - نظام إدارة المستشفى{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="bi bi-shield-lock"></i> لوحة إدارة النظام</h2>
+        <p class="text-muted">إدارة المستخدمين والأدوار والصلاحيات</p>
+    </div>
+    <div class="col-md-4 text-start">
+        <div class="btn-group">
+            <a href="{{ url_for('admin.users_list') }}" class="btn btn-primary">
+                <i class="bi bi-people"></i> المستخدمون
+            </a>
+            <a href="{{ url_for('admin.roles_list') }}" class="btn btn-success">
+                <i class="bi bi-shield-check"></i> الأدوار
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">إجمالي المستخدمين</h6>
+                        <h2 class="text-primary mb-0">{{ total_users }}</h2>
+                    </div>
+                    <i class="bi bi-people text-primary" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">المستخدمون النشطون</h6>
+                        <h2 class="text-success mb-0">{{ active_users }}</h2>
+                    </div>
+                    <i class="bi bi-person-check text-success" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">الأدوار</h6>
+                        <h2 class="text-info mb-0">{{ total_roles }}</h2>
+                    </div>
+                    <i class="bi bi-shield-check text-info" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">الصلاحيات</h6>
+                        <h2 class="text-warning mb-0">{{ total_permissions }}</h2>
+                    </div>
+                    <i class="bi bi-key text-warning" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Users -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-plus"></i> آخر المستخدمين المضافين</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_users %}
+                <div class="list-group list-group-flush">
+                    {% for user in recent_users %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ user.full_name_ar }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-at"></i> {{ user.username }} | 
+                                    <i class="bi bi-shield"></i> {{ user.role.name }}
+                                </small>
+                            </div>
+                            <div>
+                                {% if user.is_active %}
+                                <span class="badge bg-success">نشط</span>
+                                {% else %}
+                                <span class="badge bg-secondary">معطل</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">لا يوجد مستخدمون</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Users by Role -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> توزيع المستخدمين حسب الدور</h5>
+            </div>
+            <div class="card-body">
+                {% if roles_with_counts %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>الدور</th>
+                                <th class="text-center">عدد المستخدمين</th>
+                                <th class="text-center">النسبة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for role_name, count in roles_with_counts %}
+                            <tr>
+                                <td><strong>{{ role_name }}</strong></td>
+                                <td class="text-center">{{ count }}</td>
+                                <td class="text-center">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ (count / total_users * 100)|round(1) }}%">
+                                            {{ (count / total_users * 100)|round(1) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">لا توجد بيانات</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mt-4">
+    <div class="card-body text-center">
+        <h5 class="mb-3">إجراءات سريعة</h5>
+        <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary btn-lg me-2">
+            <i class="bi bi-person-plus"></i> إضافة مستخدم جديد
+        </a>
+        <a href="{{ url_for('admin.create_role') }}" class="btn btn-success btn-lg">
+            <i class="bi bi-shield-plus"></i> إنشاء دور جديد
+        </a>
+    </div>
+</div>
+{% endblock %}

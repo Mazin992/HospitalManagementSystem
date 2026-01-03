@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}حجز موعد - نظام إدارة المستشفى{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-calendar-plus"></i> حجز موعد جديد</h2>
+        {% if patient %}
+        <p class="text-muted">للمريض: <strong>{{ patient.full_name }}</strong> ({{ patient.file_number }})</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" novalidate id="appointmentForm">
+                    {{ form.hidden_tag() }}
+                    
+                    {% if patient %}
+                        {{ form.patient_id() }}
+                    {% else %}
+                    <div class="mb-3">
+                        {{ form.patient_id.label(class="form-label") }}
+                        {{ form.patient_id(class="form-select" + (" is-invalid" if form.patient_id.errors else "")) }}
+                        {% if form.patient_id.errors %}
+                            <div class="invalid-feedback">{{ form.patient_id.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        {{ form.doctor_id.label(class="form-label") }}
+                        {{ form.doctor_id(class="form-select" + (" is-invalid" if form.doctor_id.errors else ""), id="doctorSelect") }}
+                        {% if form.doctor_id.errors %}
+                            <div class="invalid-feedback">{{ form.doctor_id.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.date_time.label(class="form-label") }}
+                        {{ form.date_time(class="form-control" + (" is-invalid" if form.date_time.errors else ""), id="dateTimeInput") }}
+                        {% if form.date_time.errors %}
+                            <div class="invalid-feedback">{{ form.date_time.errors[0] }}</div>
+                        {% endif %}
+                        <div id="availabilityMessage" class="form-text"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.type.label(class="form-label") }}
+                        {{ form.type(class="form-select") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows="3") }}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('patients.view_patient', patient_id=patient.id) if patient else url_for('appointments.list_appointments') }}" 
+                           class="btn btn-secondary">
+                            <i class="bi bi-arrow-right"></i> رجوع
+                        </a>
+                        {{ form.submit(class="btn btn-primary", id="submitBtn") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 on the patient and doctor dropdowns
+        $('#patient_id, #doctorSelect').select2({
+            theme: 'bootstrap-5',
+            dir: "rtl",
+            placeholder: "اختر من القائمة",
+            allowClear: true,
+            width: '100%' // Fix width issues
+        });
+    });
+
+    // Real-time availability checking (Existing logic updated to work with Select2)
+    const doctorSelect = $('#doctorSelect'); // Use jQuery for Select2 compatibility
+    const dateTimeInput = document.getElementById('dateTimeInput');
+    const availabilityMessage = document.getElementById('availabilityMessage');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function checkAvailability() {
+        const doctorId = doctorSelect.val(); // Get value via jQuery
+        const dateTime = dateTimeInput.value;
+
+        if (!doctorId || doctorId == '0' || !dateTime) {
+            availabilityMessage.textContent = '';
+            return;
+        }
+
+        fetch('{{ url_for("appointments.check_availability") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                doctor_id: doctorId,
+                date_time: dateTime
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.available) {
+                availabilityMessage.textContent = '✓ الطبيب متاح في هذا الوقت';
+                availabilityMessage.className = 'form-text text-success';
+                submitBtn.disabled = false;
+            } else {
+                availabilityMessage.textContent = '✗ ' + data.message;
+                availabilityMessage.className = 'form-text text-danger';
+                // submitBtn.disabled = true; // Optional: block submission
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    // Listen for Select2 change event
+    doctorSelect.on('change', checkAvailability);
+    dateTimeInput.addEventListener('change', checkAvailability);
+</script>
+{% endblock %}
