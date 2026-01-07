@@ -139,7 +139,7 @@
                 </a>
             </div>
         </div>
-        {% elif appointment.status.value in ['confirmed', 'pending'] and if current_user.can('appointments.view') %}
+        {% elif appointment.status.value in ['confirmed', 'pending'] and current_user.can('appointments.view') %}
         <div class="card">
             <div class="card-body">
                 <div class="alert alert-info mb-0">
