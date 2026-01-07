@@ -32,14 +32,13 @@ def dashboard():
     ).order_by(Appointment.date_time).all()
 
     # Doctor-specific view
-    if current_user.role.name == 'Doctor':
+    if not current_user.can('admin.access'):
         todays_appointments = [
             appt for appt in todays_appointments
             if appt.doctor_id == current_user.id
         ]
 
-    # Redirect doctors to their specialized dashboard
-    if current_user.role.name == 'Doctor':
+    if current_user.can('clinical.view_own') and not current_user.can('admin.access'):
         return redirect(url_for('clinical.doctor_dashboard'))
 
     # Get today's date

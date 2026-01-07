@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import SelectField, DateTimeLocalField, TextAreaField, SubmitField, HiddenField
 from wtforms.validators import DataRequired, Optional
-from app.models import Patient, User
+from app.models import Patient, User, Role, Permission
 from app import db
 
 class AppointmentForm(FlaskForm):
@@ -49,12 +49,11 @@ class AppointmentForm(FlaskForm):
         ]
         
         # Populate doctor choices (users with Doctor role)
-        doctors = User.query.join(User.role).filter(
-            db.or_(
-                db.func.lower(db.text("roles.name")) == 'doctor',
-                db.func.lower(db.text("roles.name")) == 'super admin'
-            )
-        ).filter(User.is_active == True).all()
+        doctors = User.query.join(User.role).join(Role.permissions).filter(
+            Permission.slug == 'clinical.create',
+            Role.is_system_role == False,
+            User.is_active == True
+        ).all()
         
         self.doctor_id.choices = [(0, 'اختر الطبيب')] + [
             (d.id, d.full_name_ar) for d in doctors

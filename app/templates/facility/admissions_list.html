@@ -118,7 +118,7 @@
                                    class="btn btn-outline-primary">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                {% if admission.status.value == 'active' and if current_user.can('facility.discharge') %}
+                                {% if admission.status.value == 'active' and current_user.can('facility.discharge') %}
                                 <a href="{{ url_for('facility.discharge_patient', admission_id=admission.id) }}" 
                                    class="btn btn-outline-warning">
                                     <i class="bi bi-box-arrow-right"></i>

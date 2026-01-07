@@ -29,21 +29,6 @@ echo ✅ Python %PY_VER% found
 echo.
 
 REM -------------------------------
-REM Check Git
-REM -------------------------------
-echo Checking Git...
-git --version >nul 2>&1
-IF ERRORLEVEL 1 (
-    echo ❌ Git is NOT installed.
-    echo Please install Git from:
-    echo https://git-scm.com/downloads
-    pause
-    exit /b
-)
-echo ✅ Git installed
-echo.
-
-REM -------------------------------
 REM Check PostgreSQL
 REM -------------------------------
 echo Checking PostgreSQL...
@@ -133,9 +118,6 @@ echo.
 
 REM Optional: Set DATABASE_URL environment variable
 set DATABASE_URL=postgresql://%DB_USER%:%DB_PASSWORD%@%DB_HOST%:%DB_PORT%/%DB_NAME%
-
-echo After that, press any key to continue...
-pause
 
 REM -------------------------------
 REM Initialize Database

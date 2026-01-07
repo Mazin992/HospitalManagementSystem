@@ -3,21 +3,21 @@ from flask_login import login_required, current_user
 from app.clinical import bp
 from app.clinical.forms import MedicalVisitForm
 from app.models import Appointment, MedicalVisit, Patient, AppointmentStatus
-from app.decorators import role_required
+from app.decorators import permission_required
 from app import db
 from datetime import datetime, date
 from sqlalchemy import func, desc
 
 @bp.route('/doctor/dashboard')
 @login_required
-@role_required('Doctor', 'Super Admin')
+@permission_required('clinical', 'view')
 def doctor_dashboard():
     """Doctor's personalized dashboard showing their appointments"""
     
     today = date.today()
     
     # Get doctor's appointments for today
-    if current_user.role.name == 'Super Admin':
+    if current_user.can('admin.access'):
         # Super Admin can see all appointments
         todays_appointments = Appointment.query.filter(
             func.date(Appointment.date_time) == today
@@ -68,14 +68,14 @@ def doctor_dashboard():
 
 @bp.route('/doctor/visit/<int:appointment_id>', methods=['GET', 'POST'])
 @login_required
-@role_required('Doctor', 'Super Admin')
+@permission_required('clinical', 'create')
 def consultation(appointment_id):
     """Consultation page for entering medical visit details"""
     
     appointment = Appointment.query.get_or_404(appointment_id)
     
     # Verify doctor owns this appointment (unless Super Admin)
-    if current_user.role.name != 'Super Admin':
+    if not current_user.can('admin.access'):
         if appointment.doctor_id != current_user.id:
             flash('ليس لديك صلاحية للوصول إلى هذا الموعد.', 'danger')
             return redirect(url_for('clinical.doctor_dashboard'))
@@ -155,14 +155,14 @@ def consultation(appointment_id):
 
 @bp.route('/doctor/visit/view/<int:visit_id>')
 @login_required
-@role_required('Doctor', 'Super Admin', 'Nurse', 'Reception')
+@permission_required('clinical', 'read')
 def view_visit(visit_id):
     """View a completed medical visit (read-only)"""
     
     visit = MedicalVisit.query.get_or_404(visit_id)
     
     # Doctors can only view their own visits (unless Super Admin)
-    if current_user.role.name == 'Doctor':
+    if not current_user.can('admin.access'):
         if visit.doctor_id != current_user.id:
             flash('ليس لديك صلاحية لعرض هذا الكشف.', 'danger')
             return redirect(url_for('clinical.doctor_dashboard'))
@@ -172,7 +172,7 @@ def view_visit(visit_id):
 
 @bp.route('/patient/<int:patient_id>/history')
 @login_required
-@role_required('Doctor', 'Super Admin', 'Nurse', 'Reception')
+@permission_required('clinical', 'read')
 def patient_history(patient_id):
     """View patient's complete medical history"""
     
@@ -198,14 +198,14 @@ def patient_history(patient_id):
 
 @bp.route('/doctor/appointment/<int:appointment_id>/start', methods=['POST'])
 @login_required
-@role_required('Doctor', 'Super Admin')
+@permission_required('clinical', 'create')
 def start_appointment(appointment_id):
     """Mark appointment as in-progress and redirect to consultation"""
     
     appointment = Appointment.query.get_or_404(appointment_id)
     
     # Verify ownership
-    if current_user.role.name != 'Super Admin':
+    if not current_user.can('admin.access'):
         if appointment.doctor_id != current_user.id:
             flash('ليس لديك صلاحية لهذا الإجراء.', 'danger')
             return redirect(url_for('clinical.doctor_dashboard'))
@@ -220,14 +220,14 @@ def start_appointment(appointment_id):
 
 @bp.route('/doctor/appointment/<int:appointment_id>/no-show', methods=['POST'])
 @login_required
-@role_required('Doctor', 'Super Admin')
+@permission_required('clinical', 'write')
 def mark_no_show(appointment_id):
     """Mark appointment as no-show"""
     
     appointment = Appointment.query.get_or_404(appointment_id)
     
     # Verify ownership
-    if current_user.role.name != 'Super Admin':
+    if not current_user.can('admin.access'):
         if appointment.doctor_id != current_user.id:
             flash('ليس لديك صلاحية لهذا الإجراء.', 'danger')
             return redirect(url_for('clinical.doctor_dashboard'))

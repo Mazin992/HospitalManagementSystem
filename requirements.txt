@@ -4,7 +4,7 @@ Werkzeug==3.0.1
 
 # Database
 Flask-SQLAlchemy==3.1.1
-psycopg2-binary==2.9.9
+psycopg==3.1.18
 alembic==1.13.1
 
 # Authentication & Forms

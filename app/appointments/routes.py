@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app.appointments import bp
 from app.appointments.forms import AppointmentForm, QuickAppointmentForm
-from app.models import Appointment, Patient, User, AppointmentStatus
+from app.models import Appointment, Patient, User, AppointmentStatus, Role, Permission
 from app.decorators import permission_required
 from app import db
 from datetime import datetime, timedelta
@@ -69,11 +69,12 @@ def list_appointments():
     appointments = query.order_by(Appointment.date_time.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
-    
-    # Get all doctors for filter dropdown
-    doctors = User.query.join(User.role).filter(
-        db.text("roles.name IN ('Doctor', 'Super Admin')")
-    ).filter(User.is_active == True).all()
+
+    doctors = User.query.join(User.role).join(Role.permissions).filter(
+        Permission.slug == 'clinical.create',
+        Role.is_system_role == False,
+        User.is_active == True
+    ).all()
     
     return render_template(
         'appointments/list.html',
@@ -97,11 +98,12 @@ def book_appointment():
         # Quick booking for specific patient
         patient = Patient.query.get_or_404(patient_id)
         form = QuickAppointmentForm()
-        
-        # Populate doctor choices
-        doctors = User.query.join(User.role).filter(
-            db.text("roles.name IN ('Doctor', 'Super Admin')")
-        ).filter(User.is_active == True).all()
+
+        doctors = User.query.join(User.role).join(Role.permissions).filter(
+            Permission.slug == 'clinical.create',
+            Role.is_system_role == False,
+            User.is_active == True
+        ).all()
         form.doctor_id.choices = [(0, 'اختر الطبيب')] + [
             (d.id, d.full_name_ar) for d in doctors
         ]
