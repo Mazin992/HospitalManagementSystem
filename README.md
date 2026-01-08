@@ -30,7 +30,11 @@ Click the image above to watch the video on YouTube.
 ## 📦 Requirements
 
 - Python 3.9+
+Download link https://www.python.org/downloads/windows/
+
 - PostgreSQL
+Download link https://www.postgresql.org/download/
+
 - `pip` for Python package management
 
 ## 🚀 Quick Start
