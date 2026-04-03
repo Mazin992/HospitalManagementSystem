@@ -10,6 +10,17 @@ def dashboard():
     # Get today's date
     today = datetime.now().date()
 
+    todays_query = Appointment.query.filter(func.cast(Appointment.date_time, Date) == today)
+    pending_query = Appointment.query.filter(Appointment.status == AppointmentStatus.pending)
+
+    if not current_user.can('admin.access') and current_user.can('clinical.view_own'):
+        todays_query = todays_query.filter(Appointment.doctor_id == current_user.id)
+        pending_query = pending_query.filter(Appointment.doctor_id == current_user.id)
+
+    todays_appointments = todays_query.order_by(Appointment.date_time).all()
+    today_appointments_count = todays_query.count()
+    pending_appointments_count = pending_query.count()
+
     # Statistics
     total_patients = Patient.query.count()
 
@@ -68,8 +79,8 @@ def dashboard():
     return render_template(
         'dashboard.html',
         total_patients=total_patients,
-        today_appointments=today_appointments,
-        pending_appointments=pending_appointments,
+        today_appointments=today_appointments_count,
+        pending_appointments=pending_appointments_count,
         recent_patients=recent_patients,
         todays_appointments=todays_appointments
     )

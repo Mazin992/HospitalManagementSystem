@@ -1,145 +1,160 @@
 {% extends "base.html" %}
 
-{% block title %}لوحة التحكم - نظام إدارة المستشفى{% endblock %}
-
-{% block navbar %}
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
-            <i class="bi bi-hospital"></i> نظام إدارة المستشفى
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.dashboard') }}">
-                        <i class="bi bi-house"></i> الرئيسية
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('patients.list_patients') }}">
-                        <i class="bi bi-people"></i> المرضى
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('appointments.list_appointments') }}">
-                        <i class="bi bi-calendar-event"></i> المواعيد
-                    </a>
-                </li>
-            </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                        data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle"></i> {{ current_user.full_name_ar }}
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#">
-                            <i class="bi bi-shield"></i> {{ current_user.role.name }}
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
-                            <i class="bi bi-box-arrow-left"></i> تسجيل الخروج
-                        </a></li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
-{% endblock %}
+{% block title %}لوحة التحكم - {{ config.get('HOSPITAL_NAME_AR', 'نظام إدارة المستشفى') }}{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <h2>مرحباً، {{ current_user.full_name_ar }}</h2>
-        <p class="text-muted">{{ current_user.role.name }}</p>
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h2 class="fw-bold"><i class="bi text-primary"></i> مرحباً، {{ current_user.full_name_ar }}</h2>
+        <p class="text-muted fs-5 mb-0">
+            <span class="badge bg-primary">{{ current_user.role.name }}</span>
+
+        </p>
+    </div>
+    <div class="col-md-4 text-start">
+        <div class="btn-group shadow-sm">
+            {% if current_user.can('patients.create') %}
+            <a href="{{ url_for('patients.create_patient') }}" class="btn btn-outline-primary">
+                <i class="bi bi-person-plus-fill"></i> مريض جديد
+            </a>
+            {% endif %}
+
+            {% if current_user.can('appointments.create') %}
+            <a href="{{ url_for('appointments.book_appointment') }}" class="btn btn-outline-success">
+                <i class="bi bi-calendar-plus-fill"></i> حجز موعد
+            </a>
+            {% endif %}
+
+            {% if current_user.can('billing.create') %}
+            <a href="{{ url_for('billing.create_invoice') }}" class="btn btn-outline-warning">
+                <i class="bi bi-receipt-cutoff"></i> فاتورة
+            </a>
+            {% endif %}
+        </div>
     </div>
 </div>
 
-<!-- Statistics Cards -->
 <div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary">
+
+    {% if current_user.can('patients.view') %}
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-primary border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-title">إجمالي المرضى</h6>
-                        <h2 class="mb-0">{{ total_patients }}</h2>
+                        <h6 class="card-title opacity-75 fw-bold">إجمالي المرضى</h6>
+                        <h2 class="mb-0 fw-bold">{{ total_patients }}</h2>
                     </div>
-                    <i class="bi bi-people" style="font-size: 3rem; opacity: 0.5;"></i>
+                    <i class="bi bi-people-fill" style="font-size: 3rem; opacity: 0.5;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if current_user.can('appointments.view') or current_user.can('appointments.view_own') %}
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-success border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title opacity-75 fw-bold">
+                            {% if current_user.can('clinical.view_own') and not current_user.can('admin.access') %}مواعيدي اليوم{% else %}مواعيد اليوم{% endif %}
+                        </h6>
+                        <h2 class="mb-0 fw-bold">{{ today_appointments }}</h2>
+                    </div>
+                    <i class="bi bi-calendar-check-fill" style="font-size: 3rem; opacity: 0.5;"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card text-white bg-success">
+    <div class="col-md-4 mb-3">
+        <div class="card text-white bg-warning border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-title">مواعيد اليوم</h6>
-                        <h2 class="mb-0">{{ today_appointments }}</h2>
+                        <h6 class="card-title opacity-75 fw-bold">في الانتظار</h6>
+                        <h2 class="mb-0 fw-bold">{{ pending_appointments }}</h2>
                     </div>
-                    <i class="bi bi-calendar-check" style="font-size: 3rem; opacity: 0.5;"></i>
+                    <i class="bi bi-clock-fill" style="font-size: 3rem; opacity: 0.5;"></i>
                 </div>
             </div>
         </div>
     </div>
+    {% endif %}
 
-    <div class="col-md-4">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">مواعيد معلقة</h6>
-                        <h2 class="mb-0">{{ pending_appointments }}</h2>
-                    </div>
-                    <i class="bi bi-clock-history" style="font-size: 3rem; opacity: 0.5;"></i>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="row">
-    <!-- Today's Appointments -->
-    <div class="col-md-7">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-calendar-day"></i> مواعيد اليوم</h5>
+
+    {% if current_user.can('appointments.view') or current_user.can('appointments.view_own') %}
+    <div class="col-lg-7 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-calendar-day text-primary"></i>
+                    {% if current_user.can('clinical.view_own') and not current_user.can('admin.access') %}جدول مواعيدي اليوم{% else %}جدول مواعيد اليوم{% endif %}
+                </h5>
             </div>
             <div class="card-body">
                 {% if todays_appointments %}
                 <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
                             <tr>
                                 <th>الوقت</th>
                                 <th>المريض</th>
+                                {% if current_user.can('admin.access') or not current_user.can('clinical.view_own') %}
                                 <th>الطبيب</th>
+                                {% endif %}
                                 <th>الحالة</th>
+                                <th>الإجراء</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for appt in todays_appointments %}
                             <tr>
-                                <td>{{ appt.date_time.strftime('%H:%M') }}</td>
+                                <td><span class="badge bg-light text-dark fs-6">{{ appt.date_time.strftime('%H:%M') }}</span></td>
                                 <td>
-                                    <a href="{{ url_for('patients.view_patient', patient_id=appt.patient.id) }}">
+                                    {% if current_user.can('patients.view') %}
+                                    <a href="{{ url_for('patients.view_patient', patient_id=appt.patient.id) }}" class="text-decoration-none fw-bold">
                                         {{ appt.patient.full_name }}
                                     </a>
+                                    {% else %}
+                                        <span class="fw-bold">{{ appt.patient.full_name }}</span>
+                                    {% endif %}
+                                    <br><small class="text-muted">{{ appt.patient.file_number }}</small>
                                 </td>
+
+                                {% if current_user.can('admin.access') or not current_user.can('clinical.view_own') %}
                                 <td>{{ appt.doctor.full_name_ar }}</td>
+                                {% endif %}
+
                                 <td>
                                     {% if appt.status.value == 'confirmed' %}
-                                        <span class="badge bg-primary">مؤكد</span>
+                                        <span class="badge bg-primary rounded-pill px-2">مؤكد</span>
                                     {% elif appt.status.value == 'pending' %}
-                                        <span class="badge bg-warning">معلق</span>
+                                        <span class="badge bg-warning rounded-pill px-2">معلق</span>
                                     {% elif appt.status.value == 'completed' %}
-                                        <span class="badge bg-success">مكتمل</span>
+                                        <span class="badge bg-success rounded-pill px-2">مكتمل</span>
+                                    {% elif appt.status.value == 'cancelled' %}
+                                        <span class="badge bg-danger rounded-pill px-2">ملغي</span>
+                                    {% elif appt.status.value == 'no_show' %}
+                                        <span class="badge bg-secondary rounded-pill px-2">لم يحضر</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if current_user.can('clinical.create') and appt.status.value in ['pending', 'confirmed'] %}
+                                    <form method="POST" action="{{ url_for('clinical.start_appointment', appointment_id=appt.id) }}" class="m-0">
+                                        <button type="submit" class="btn btn-sm btn-success rounded-pill">
+                                            <i class="bi bi-play-circle"></i> بدء الكشف
+                                        </button>
+                                    </form>
+                                    {% elif appt.status.value == 'completed' and appt.medical_visit %}
+                                    <a href="{{ url_for('clinical.view_visit', visit_id=appt.medical_visit.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                        <i class="bi bi-eye"></i> عرض
+                                    </a>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -148,146 +163,72 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted">لا توجد مواعيد لهذا اليوم</p>
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-calendar2-check fs-1 text-success opacity-50"></i>
+                    <p class="mt-3 mb-0 fs-5">لا توجد مواعيد مجدولة لهذا اليوم.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
+    {% endif %}
 
-    <!-- Recent Patients -->
-    <div class="col-md-5">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-person-plus"></i> آخر المرضى المسجلين</h5>
+    {% if current_user.can('patients.view') and not current_user.can('clinical.view_own') %}
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-person-lines-fill text-success"></i> أحدث التسجيلات</h5>
             </div>
             <div class="card-body">
                 {% if recent_patients %}
-                <ul class="list-group list-group-flush">
+                <div class="list-group list-group-flush">
                     {% for patient in recent_patients %}
-                    <li class="list-group-item">
-                        <a href="{{ url_for('patients.view_patient', patient_id=patient.id) }}">
-                            <strong>{{ patient.full_name }}</strong>
-                        </a>
-                        <br>
-                        <small class="text-muted">{{ patient.file_number }} - {{ patient.phone }}</small>
-                    </li>
+                    <a href="{{ url_for('patients.view_patient', patient_id=patient.id) }}" class="list-group-item list-group-item-action border-0 px-0 py-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded-circle p-2 me-3 text-primary">
+                                    <i class="bi bi-person-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ patient.full_name }}</h6>
+                                    <small class="text-muted">{{ patient.file_number }}</small>
+                                </div>
+                            </div>
+                            <span class="text-muted small">{{ patient.created_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
+                    </a>
                     {% endfor %}
-                </ul>
+                </div>
+                <div class="mt-3 text-center">
+                    <a href="{{ url_for('patients.list_patients') }}" class="btn btn-sm btn-outline-secondary w-100">عرض جميع المرضى</a>
+                </div>
                 {% else %}
-                <p class="text-muted">لا توجد مرضى مسجلين</p>
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-1 opacity-50"></i>
+                    <p class="mt-2">لم يتم تسجيل أي مرضى بعد.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
+    {% endif %}
+
 </div>
 
-<!-- Footer -->
-<footer class="mt-5 py-4 bg-light border-top">
+<footer class="mt-5 py-4 bg-white border-top rounded shadow-sm">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-6 text-center text-md-start">
                 <p class="mb-0 text-muted">
-                    <i class="bi bi-code-slash"></i>
-                    Developed by
-                    <strong class="text-primary">Mazin Elfaki</strong>
+                    <i class="bi bi-hospital"></i> {{ config.get('HOSPITAL_NAME_AR', 'نظام إدارة المستشفى') }}
                 </p>
             </div>
             <div class="col-md-6 text-center text-md-end">
                 <p class="mb-0 text-muted">
-                    © 2026 Hospital Management System
-                    <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#developerModal">
-                        <i class="bi bi-info-circle"></i> About Developer
-                    </button>
+                    © {{ date.today().year }} Mazin Elfaki
                 </p>
             </div>
         </div>
     </div>
 </footer>
-
-<!-- Developer Info Modal -->
-<div class="modal fade" id="developerModal" tabindex="-1" aria-labelledby="developerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="developerModalLabel">
-                    <i class="bi bi-person-badge"></i> Developer Information
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-4">
-                    <div class="d-inline-block p-3 bg-primary bg-opacity-10 rounded-circle mb-3">
-                        <i class="bi bi-person-circle text-primary" style="font-size: 4rem;"></i>
-                    </div>
-                    <h4 class="mb-2">Mazin Elfaki</h4>
-                    <p class="text-muted mb-0">Full Stack Developer</p>
-                </div>
-
-                <div class="card border-0 bg-light mb-3">
-                    <div class="card-body">
-                        <h6 class="card-subtitle mb-3 text-muted">
-                            <i class="bi bi-envelope-fill text-primary"></i> Email
-                        </h6>
-                        <a href="mailto:mazin360@gmail.com" class="text-decoration-none">
-                            <i class="bi bi-envelope"></i> mazin360@gmail.com
-                        </a>
-                    </div>
-                </div>
-
-                <div class="card border-0 bg-light mb-3">
-                    <div class="card-body">
-                        <h6 class="card-subtitle mb-3 text-muted">
-                            <i class="bi bi-linkedin text-primary"></i> LinkedIn
-                        </h6>
-                        <a href="https://www.linkedin.com/in/mazin-elfaki-305060a2/" target="_blank" class="text-decoration-none">
-                            <i class="bi bi-box-arrow-up-right"></i> Connect on LinkedIn
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-0 justify-content-center">
-                <a href="mailto:mazin360@gmail.com" class="btn btn-primary">
-                    <i class="bi bi-envelope-fill"></i> Send Email
-                </a>
-                <a href="https://www.linkedin.com/in/mazin-elfaki-305060a2/" target="_blank" class="btn btn-outline-primary">
-                    <i class="bi bi-linkedin"></i> LinkedIn
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-footer {
-    margin-top: 3rem;
-}
-
-#developerModal .modal-content {
-    border-radius: 15px;
-    overflow: hidden;
-}
-
-#developerModal .modal-header {
-    border-bottom: none;
-}
-
-#developerModal .card {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-#developerModal .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-#developerModal a {
-    color: #0d6efd;
-    transition: color 0.2s;
-}
-
-#developerModal a:hover {
-    color: #0a58ca;
-}
-</style>
-
 {% endblock %}

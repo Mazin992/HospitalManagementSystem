@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}تفاصيل الموعد - نظام إدارة المستشفى{% endblock %}
+{% block title %}تفاصيل الموعد - {{ config.get('HOSPITAL_NAME_AR', 'نظام إدارة المستشفى') }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">

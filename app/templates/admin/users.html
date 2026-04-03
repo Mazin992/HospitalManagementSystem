@@ -2,7 +2,7 @@
 
 {% extends "base.html" %}
 
-{% block title %}إدارة المستخدمين - نظام إدارة المستشفى{% endblock %}
+{% block title %}إدارة المستخدمين - {{ config.get('HOSPITAL_NAME_AR', 'نظام إدارة المستشفى') }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">

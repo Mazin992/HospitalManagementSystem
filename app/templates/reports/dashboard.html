@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}لوحة التقارير والإحصائيات - نظام إدارة المستشفى{% endblock %}
+{% block title %}لوحة التقارير والإحصائيات - {{ config.get('HOSPITAL_NAME_AR', 'نظام إدارة المستشفى') }}{% endblock %}
 
 {% block extra_css %}
 <style>

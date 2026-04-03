@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}تسجيل مريض جديد - نظام إدارة المستشفى{% endblock %}
+{% block title %}تسجيل مريض جديد - {{ config.get('HOSPITAL_NAME_AR', 'نظام إدارة المستشفى') }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">

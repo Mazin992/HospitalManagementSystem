@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}إنشاء فاتورة جديدة - نظام إدارة المستشفى{% endblock %}
+{% block title %}إنشاء فاتورة جديدة - {{ config.get('HOSPITAL_NAME_AR', 'نظام إدارة المستشفى') }}{% endblock %}
 
 {% block extra_css %}
 <!-- Select2 CSS for Auto-Complete -->
